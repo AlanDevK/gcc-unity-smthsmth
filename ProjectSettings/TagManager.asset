@@ -6,6 +6,10 @@ TagManager:
   tags:
   - Ground
   - Collectibles
+  - Obstacles
+  - Interactables
+  - Enemies
+  - Bullets
   layers:
   - Default
   - TransparentFX
