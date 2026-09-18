@@ -10,12 +10,14 @@ public class PlayerMovement : MonoBehaviour
     InputAction shootAction;
     InputAction aimAction;
     InputAction reloadAction;
+    InputAction interactAction;
     [SerializeField] GameObject bullet;
     [SerializeField] Transform spawnPointPos;
     [SerializeField] float moveSpeed = 0.5f;
     Rigidbody2D rb;
     Vector2 moveDir;
     NPC npcScript;
+    DoorScript doorScript;
     float dialogueTimer = 10f;
     bool canShoot = true;
     [SerializeField] float shootCooldown = 0.08f;
@@ -27,26 +29,30 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] int totalBulletCount = 24;
     int currentRoundBulletCount = 6;
     int oneRoundBulletCount = 6;
-    [SerializeField] TextMeshProUGUI roundBulletCountUI;
-    [SerializeField] TextMeshProUGUI totalBulletCountUI;
-    [SerializeField] TextMeshProUGUI healthCountUI;
+    // [SerializeField] TextMeshProUGUI roundBulletCountUI;
+    // [SerializeField] TextMeshProUGUI totalBulletCountUI;
+    // [SerializeField] TextMeshProUGUI healthCountUI;
     [SerializeField] int playerHealth = 100;
+    Animator playerAnim;
 
     void Awake(){
+        playerAnim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
         cam = Camera.main;
         moveAction = InputSystem.actions.FindAction("Move");
         shootAction = InputSystem.actions.FindAction("Shoot");
         aimAction = InputSystem.actions.FindAction("Aim");
         reloadAction = InputSystem.actions.FindAction("Reload");
-        roundBulletCountUI.text = $"Bullets In Round: {currentRoundBulletCount}";
-        totalBulletCountUI.text = $"Total Number Of Bullets: {totalBulletCount}";
-        healthCountUI.text = $"Amy's health: {playerHealth}";
+        interactAction = InputSystem.actions.FindAction("Interact");
+        // roundBulletCountUI.text = $"Bullets In Round: {currentRoundBulletCount}";
+        // totalBulletCountUI.text = $"Total Number Of Bullets: {totalBulletCount}";
+        // healthCountUI.text = $"Amy's health: {playerHealth}";
     }
     void Update(){  
         if (isKnockedBack) return;
         moveDir = moveAction.ReadValue<Vector2>();
         rb.linearVelocity = moveDir * moveSpeed;
+        playerAnim.SetFloat("HorizontalValue", moveDir.x);
         HandleShooting();
         HandleAiming();
         HandleReloading();
@@ -57,7 +63,7 @@ public class PlayerMovement : MonoBehaviour
             Knockback();
             currentRoundBulletCount--;
             StartCoroutine(ShootCooldown());
-            roundBulletCountUI.text = $"Bullets In Round: {currentRoundBulletCount}";
+            // roundBulletCountUI.text = $"Bullets In Round: {currentRoundBulletCount}";
         }
     }
     void Knockback(){
@@ -85,8 +91,8 @@ public class PlayerMovement : MonoBehaviour
                 currentRoundBulletCount+=numberOfReload;
                 totalBulletCount-=numberOfReload;
             }
-            roundBulletCountUI.text = $"Bullets In Round: {currentRoundBulletCount}";
-            totalBulletCountUI.text = $"Total Number Of Bullets: {totalBulletCount}";
+            // roundBulletCountUI.text = $"Bullets In Round: {currentRoundBulletCount}";
+            // totalBulletCountUI.text = $"Total Number Of Bullets: {totalBulletCount}";
         }
     }
     void OnTriggerEnter2D(Collider2D other){
@@ -94,6 +100,16 @@ public class PlayerMovement : MonoBehaviour
             npcScript = other.gameObject.GetComponent<NPC>();
             npcScript.Interact();
             StartCoroutine(DialogueTimer());
+        }
+    }
+    void OnTriggerStay2D(Collider2D other){
+        if (other.CompareTag("Doors") && interactAction.WasPressedThisFrame()){
+            doorScript = other.gameObject.GetComponent<DoorScript>();
+            if (!doorScript.doorOpen){
+                doorScript.OpenDoorInteraction();
+            } else if (doorScript.doorOpen){
+                doorScript.CloseDoorInteraction();
+            }
         }
     }
     void OnTriggerExit2D(Collider2D other){

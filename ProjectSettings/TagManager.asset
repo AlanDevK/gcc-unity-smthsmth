@@ -10,6 +10,7 @@ TagManager:
   - Interactables
   - Enemies
   - Bullets
+  - Doors
   layers:
   - Default
   - TransparentFX
